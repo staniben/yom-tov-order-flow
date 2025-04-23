@@ -1,24 +1,34 @@
+
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import { he } from "date-fns/locale";
-
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
+  // Optional prop: after select, call this to close parent popover/dialog
+  onAutoClose?: () => void;
+};
 
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
   locale = he,
+  onSelect,
+  onAutoClose,
   ...props
 }: CalendarProps) {
+  // Wrap onSelect to allow auto-close if requested:
+  const wrappedOnSelect = (date: Date | undefined, selected: any, event: any) => {
+    if (onSelect) onSelect(date, selected, event);
+    if (date && onAutoClose) onAutoClose();
+  };
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("p-3 pointer-events-auto", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -58,6 +68,7 @@ function Calendar({
         IconRight: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
       }}
       locale={locale}
+      onSelect={onAutoClose ? wrappedOnSelect : onSelect}
       {...props}
     />
   );

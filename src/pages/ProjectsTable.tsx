@@ -1,4 +1,3 @@
-
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +29,26 @@ export default function ProjectsTable() {
     workOrderPrimary: "",
     workOrderSecondary: "",
   });
+
+  React.useEffect(() => {
+    if (!isDialogOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSave();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setIsDialogOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line
+  }, [isDialogOpen, currentProject]);
+
+  const [calendarOpenStart, setCalendarOpenStart] = useState(false);
+  const [calendarOpenEnd, setCalendarOpenEnd] = useState(false);
 
   const openAddDialog = () => {
     setIsEditMode(false);
@@ -65,44 +84,49 @@ export default function ProjectsTable() {
     }
   };
 
+  const renderWorkOrder = (primary: string, secondary: string) => {
+    if (!primary && !secondary) return "";
+    if (primary && secondary) return `${primary}\\${secondary}`;
+    return primary || secondary || "";
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">ניהול פרויקטים</h1>
         <Button onClick={openAddDialog}>פרויקט חדש</Button>
       </div>
-      
       <div className="bg-white p-4 rounded-lg shadow-sm overflow-x-auto">
-        <table className="pm-table min-w-full">
+        <table className="pm-table min-w-full table-auto rtl text-right">
           <thead>
             <tr>
-              <th>שם הפרויקט</th>
-              <th>תאריך התחלה</th>
-              <th>תאריך סיום</th>
-              <th>הזמנת עבודה</th>
-              <th>פעולות</th>
+              <th className="min-w-[120px]">שם הפרויקט</th>
+              <th className="min-w-[100px]">תאריך התחלה</th>
+              <th className="min-w-[100px]">תאריך סיום</th>
+              <th className="min-w-[120px]">הזמנת עבודה</th>
+              <th className="min-w-[90px]">פעולות</th>
             </tr>
           </thead>
           <tbody>
             {projects.map((project) => (
               <tr key={project.id}>
-                <td className="font-medium">{project.name}</td>
-                <td>{format(project.startDate, 'dd/MM/yyyy', { locale: he })}</td>
-                <td>{format(project.endDate, 'dd/MM/yyyy', { locale: he })}</td>
-                <td className="ltr">{`${project.workOrderPrimary}-${project.workOrderSecondary}`}</td>
-                <td>
+                <td className="font-medium min-w-[120px]">{project.name}</td>
+                <td className="min-w-[100px]">{format(project.startDate, "dd/MM/yyyy", { locale: he })}</td>
+                <td className="min-w-[100px]">{format(project.endDate, "dd/MM/yyyy", { locale: he })}</td>
+                <td className="ltr min-w-[120px]">{renderWorkOrder(project.workOrderPrimary, project.workOrderSecondary)}</td>
+                <td className="min-w-[90px]">
                   <div className="flex space-s-2 rtl:space-s-reverse">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => openEditDialog(project)}
                     >
                       ערוך
                     </Button>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50" 
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
                       onClick={() => handleDelete(project.id)}
                     >
                       מחק
@@ -114,13 +138,11 @@ export default function ProjectsTable() {
           </tbody>
         </table>
       </div>
-
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{isEditMode ? "עריכת פרויקט" : "הוספת פרויקט חדש"}</DialogTitle>
           </DialogHeader>
-          
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label htmlFor="project-name" className="text-sm font-medium">
@@ -132,55 +154,64 @@ export default function ProjectsTable() {
                 onChange={(e) => setCurrentProject({ ...currentProject, name: e.target.value })}
               />
             </div>
-            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">תאריך התחלה</label>
-                <Popover>
+                <Popover open={calendarOpenStart} onOpenChange={setCalendarOpenStart}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className="w-full justify-start text-right"
+                      onClick={() => setCalendarOpenStart(true)}
                     >
-                      {format(currentProject.startDate, 'dd/MM/yyyy', { locale: he })}
+                      {format(currentProject.startDate, "dd/MM/yyyy", { locale: he })}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-white pointer-events-auto" align="start">
                     <Calendar
                       mode="single"
                       selected={currentProject.startDate}
-                      onSelect={(date) => date && setCurrentProject({ ...currentProject, startDate: date })}
-                      className="p-3"
+                      onSelect={(date) => {
+                        if (date) {
+                          setCurrentProject({ ...currentProject, startDate: date });
+                          setCalendarOpenStart(false);
+                        }
+                      }}
+                      className="p-3 pointer-events-auto"
                       locale={he}
                     />
                   </PopoverContent>
                 </Popover>
               </div>
-              
               <div className="space-y-2">
                 <label className="text-sm font-medium">תאריך סיום</label>
-                <Popover>
+                <Popover open={calendarOpenEnd} onOpenChange={setCalendarOpenEnd}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className="w-full justify-start text-right"
+                      onClick={() => setCalendarOpenEnd(true)}
                     >
-                      {format(currentProject.endDate, 'dd/MM/yyyy', { locale: he })}
+                      {format(currentProject.endDate, "dd/MM/yyyy", { locale: he })}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-white pointer-events-auto" align="start">
                     <Calendar
                       mode="single"
                       selected={currentProject.endDate}
-                      onSelect={(date) => date && setCurrentProject({ ...currentProject, endDate: date })}
-                      className="p-3"
+                      onSelect={(date) => {
+                        if (date) {
+                          setCurrentProject({ ...currentProject, endDate: date });
+                          setCalendarOpenEnd(false);
+                        }
+                      }}
+                      className="p-3 pointer-events-auto"
                       locale={he}
                     />
                   </PopoverContent>
                 </Popover>
               </div>
             </div>
-            
             <div className="space-y-2">
               <label className="text-sm font-medium">הזמנת עבודה</label>
               <div className="flex items-center space-s-2 rtl:space-s-reverse">
@@ -190,7 +221,7 @@ export default function ProjectsTable() {
                   value={currentProject.workOrderPrimary}
                   onChange={(e) => setCurrentProject({ ...currentProject, workOrderPrimary: e.target.value })}
                 />
-                <span className="mx-2">-</span>
+                <span className="mx-2">\</span>
                 <Input
                   className="ltr"
                   placeholder="001"
@@ -200,7 +231,6 @@ export default function ProjectsTable() {
               </div>
             </div>
           </div>
-          
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
               ביטול
