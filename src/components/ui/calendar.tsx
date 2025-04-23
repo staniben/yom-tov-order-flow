@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, DayPickerSingleProps } from "react-day-picker";
+import { DayPicker, type DayClickEventHandler } from "react-day-picker";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -20,19 +20,14 @@ function Calendar({
   ...props
 }: CalendarProps) {
   // Handler to support auto-close: It only triggers for the correct click event.
-  const handleDayClick = React.useCallback(
-    (
-      date: Date,
-      selectedDay: any,
-      activeModifiers: any,
-      e: React.MouseEvent<HTMLButtonElement>
-    ) => {
+  const handleDayClick: DayClickEventHandler = React.useCallback(
+    (day, modifiers, e) => {
       // If a callback is provided via props, call it with original args.
       if (typeof props.onDayClick === "function") {
-        props.onDayClick(date, selectedDay, activeModifiers, e);
+        props.onDayClick(day, modifiers, e);
       }
       // Auto-close after picking a date
-      if (date && onAutoClose) {
+      if (day && onAutoClose) {
         onAutoClose();
       }
     },
@@ -90,4 +85,3 @@ function Calendar({
 Calendar.displayName = "Calendar";
 
 export { Calendar };
-
