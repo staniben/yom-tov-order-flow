@@ -1,3 +1,4 @@
+
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export default function ProjectsTable() {
   const { state, addProject, updateProject, deleteProject } = useAppContext();
@@ -30,7 +31,7 @@ export default function ProjectsTable() {
     workOrderSecondary: "",
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isDialogOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {

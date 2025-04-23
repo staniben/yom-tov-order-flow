@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, DayPickerSingleProps } from "react-day-picker";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -16,15 +16,24 @@ function Calendar({
   classNames,
   showOutsideDays = true,
   locale = he,
-  onSelect,
   onAutoClose,
   ...props
 }: CalendarProps) {
-  // Wrap onSelect to allow auto-close if requested:
-  const wrappedOnSelect = (date: Date | undefined, selected: any, event: any) => {
-    if (onSelect) onSelect(date, selected, event);
-    if (date && onAutoClose) onAutoClose();
-  };
+  const handleSelect = React.useCallback(
+    (date: Date | undefined, selectedDay: any, activeModifiers: any, e: React.MouseEvent<HTMLButtonElement>) => {
+      // Call the original onSelect if it exists (must be properly typed based on the mode)
+      if ('onSelect' in props && typeof props.onSelect === 'function') {
+        props.onSelect(date, selectedDay, activeModifiers, e);
+      }
+      
+      // If date was selected and we have an auto-close callback, call it
+      if (date && onAutoClose) {
+        onAutoClose();
+      }
+    },
+    [onAutoClose, props]
+  );
+  
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -68,7 +77,7 @@ function Calendar({
         IconRight: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
       }}
       locale={locale}
-      onSelect={onAutoClose ? wrappedOnSelect : onSelect}
+      onDayClick={handleSelect}
       {...props}
     />
   );
