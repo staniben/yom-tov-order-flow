@@ -61,6 +61,33 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom project management colors
+				"pm-blue": {
+					DEFAULT: "#1A365D",
+					50: "#EBF2FA",
+					100: "#D5E5F5",
+					200: "#AACBEB",
+					300: "#80B1E1",
+					400: "#5597D7",
+					500: "#2B7DCE",
+					600: "#1F5D9A",
+					700: "#1A365D",
+					800: "#0F2A45",
+					900: "#071B2E"
+				},
+				"pm-teal": {
+					DEFAULT: "#319795",
+					50: "#E6F7F7",
+					100: "#CDEFF0",
+					200: "#9CE0DF",
+					300: "#6BD0CF",
+					400: "#39C0BF",
+					500: "#319795",
+					600: "#247271",
+					700: "#194E4D",
+					800: "#0D2A29",
+					900: "#040606"
 				}
 			},
 			borderRadius: {
@@ -89,6 +116,15 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
+			},
+			// Adding RTL specific utilities
+			textAlign: {
+				'start': 'start',
+				'end': 'end'
+			},
+			float: {
+				'start': 'inline-start',
+				'end': 'inline-end'
 			}
 		}
 	},

@@ -35,19 +35,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -97,5 +90,71 @@
 
   body {
     @apply bg-background text-foreground;
+    direction: rtl;
+    font-family: 'Rubik', 'Open Sans', sans-serif;
+  }
+
+  /* RTL overrides for common elements */
+  th, td {
+    text-align: right;
+  }
+
+  .ltr {
+    direction: ltr;
+  }
+
+  .rtl {
+    direction: rtl;
+  }
+}
+
+/* Custom table styles */
+@layer components {
+  .pm-table {
+    @apply w-full border-collapse bg-white rounded-md overflow-hidden shadow-sm;
+  }
+
+  .pm-table th {
+    @apply bg-pm-blue-700 text-white p-3 font-medium;
+  }
+
+  .pm-table td {
+    @apply border-t border-gray-200 p-3;
+  }
+
+  .pm-table tr:hover {
+    @apply bg-gray-50;
+  }
+
+  /* Cell selection styles */
+  .pm-table td.selected {
+    @apply bg-pm-blue-50 border border-pm-blue-500;
+  }
+
+  /* Allocation cell styles */
+  .allocation-cell {
+    @apply cursor-pointer h-12 border border-gray-200 transition-colors duration-200;
+  }
+  
+  .allocation-cell:hover {
+    @apply bg-blue-50;
+  }
+  
+  .allocation-cell.selected {
+    @apply bg-pm-blue-100 border-pm-blue-500;
+  }
+
+  /* Form controls */
+  .pm-input {
+    @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-pm-blue-500 focus:ring focus:ring-pm-blue-200 focus:ring-opacity-50;
+  }
+
+  /* Nav styles */
+  .pm-nav-item {
+    @apply flex items-center gap-2 px-4 py-2 rounded-md hover:bg-pm-blue-50 text-gray-700 hover:text-pm-blue-700 transition-colors;
+  }
+  
+  .pm-nav-item.active {
+    @apply bg-pm-blue-700 text-white hover:bg-pm-blue-800 hover:text-white;
   }
 }
