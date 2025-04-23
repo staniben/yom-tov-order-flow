@@ -21,9 +21,10 @@ export interface Allocation {
   percentage: number;
 }
 
-// State interfaces
 export interface AppState {
   employees: Employee[];
   projects: Project[];
   allocations: Allocation[];
+  companyLogo: string | null;
+  companyName: string;
 }

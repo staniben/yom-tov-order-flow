@@ -1,10 +1,12 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { useAppContext } from "@/context/AppContext";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { state } = useAppContext();
 
   const navItems = [
     { path: "/", label: "טבלת שיבוץ" },
@@ -17,7 +19,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-pm-blue-700 text-white shadow-md">
+      <header className="bg-gradient-to-r from-pm-blue-800 to-pm-blue-600 text-white shadow-lg">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <h1 className="text-xl font-bold">מערכת ניהול הזמנות עבודה</h1>
           
@@ -38,10 +40,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                       location.pathname === item.path
-                        ? "bg-pm-blue-800 text-white"
-                        : "text-white hover:bg-pm-blue-600"
+                        ? "bg-pm-blue-900 text-white"
+                        : "text-white hover:bg-pm-blue-700"
                     }`}
                   >
                     {item.label}
@@ -76,9 +78,28 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      {/* Main content */}
+      {/* Logo area */}
+      <div className="bg-gradient-to-r from-gray-100 to-gray-200 border-b border-gray-300">
+        <div className="container mx-auto py-4 px-4 flex justify-center">
+          {state.companyLogo ? (
+            <img 
+              src={state.companyLogo} 
+              alt="לוגו החברה" 
+              className="h-16 object-contain" 
+            />
+          ) : (
+            <div className="h-16 w-40 flex items-center justify-center bg-white rounded-md border border-dashed border-gray-400">
+              <span className="text-gray-500 text-sm">לוגו החברה</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main content with futuristic design */}
       <main className="container mx-auto px-4 py-6">
-        {children}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+          {children}
+        </div>
       </main>
     </div>
   );

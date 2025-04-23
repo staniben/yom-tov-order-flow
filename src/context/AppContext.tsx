@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode } from "react";
 import { AppState, Employee, Project, Allocation } from "@/types";
 
@@ -44,6 +43,8 @@ const initialState: AppState = {
     { employeeId: "4", projectId: "1", percentage: 50 },
     { employeeId: "4", projectId: "3", percentage: 50 },
   ],
+  companyLogo: null,
+  companyName: "החברה שלי",
 };
 
 interface AppContextType {
@@ -58,6 +59,8 @@ interface AppContextType {
   updateAllocation: (employeeId: string, projectId: string, percentage: number) => void;
   deleteAllocation: (employeeId: string, projectId: string) => void;
   isAllocated: (employeeId: string, projectId: string) => boolean;
+  updateCompanyLogo: (logoUrl: string) => void;
+  updateCompanyName: (name: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -146,6 +149,20 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updateCompanyLogo = (logoUrl: string) => {
+    setState((prev) => ({
+      ...prev,
+      companyLogo: logoUrl
+    }));
+  };
+
+  const updateCompanyName = (name: string) => {
+    setState((prev) => ({
+      ...prev,
+      companyName: name
+    }));
+  };
+
   const value = {
     state,
     addEmployee,
@@ -158,6 +175,8 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     updateAllocation,
     deleteAllocation,
     isAllocated,
+    updateCompanyLogo,
+    updateCompanyName,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
