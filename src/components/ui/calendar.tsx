@@ -19,21 +19,26 @@ function Calendar({
   onAutoClose,
   ...props
 }: CalendarProps) {
-  const handleSelect = React.useCallback(
-    (date: Date | undefined, selectedDay: any, activeModifiers: any, e: React.MouseEvent<HTMLButtonElement>) => {
-      // Call the original onSelect if it exists (must be properly typed based on the mode)
-      if ('onSelect' in props && typeof props.onSelect === 'function') {
-        props.onSelect(date, selectedDay, activeModifiers, e);
+  // Handler to support auto-close: It only triggers for the correct click event.
+  const handleDayClick = React.useCallback(
+    (
+      date: Date,
+      selectedDay: any,
+      activeModifiers: any,
+      e: React.MouseEvent<HTMLButtonElement>
+    ) => {
+      // If a callback is provided via props, call it with original args.
+      if (typeof props.onDayClick === "function") {
+        props.onDayClick(date, selectedDay, activeModifiers, e);
       }
-      
-      // If date was selected and we have an auto-close callback, call it
+      // Auto-close after picking a date
       if (date && onAutoClose) {
         onAutoClose();
       }
     },
     [onAutoClose, props]
   );
-  
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -77,7 +82,7 @@ function Calendar({
         IconRight: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
       }}
       locale={locale}
-      onDayClick={handleSelect}
+      onDayClick={handleDayClick}
       {...props}
     />
   );
@@ -85,3 +90,4 @@ function Calendar({
 Calendar.displayName = "Calendar";
 
 export { Calendar };
+
