@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { AppState, Employee, Project, Allocation } from "@/types";
+import { AppState, Employee, Project, Allocation, WorkWeekSettings } from "@/types";
 
 // Initial mock data
 const initialState: AppState = {
@@ -17,6 +17,7 @@ const initialState: AppState = {
       endDate: new Date(2023, 8, 30),
       workOrderPrimary: "WT-2023",
       workOrderSecondary: "001",
+      approvedHours: 1000,
     },
     {
       id: "2",
@@ -25,6 +26,7 @@ const initialState: AppState = {
       endDate: new Date(2023, 11, 15),
       workOrderPrimary: "WT-2023",
       workOrderSecondary: "002",
+      approvedHours: 800,
     },
     {
       id: "3",
@@ -33,6 +35,7 @@ const initialState: AppState = {
       endDate: new Date(2023, 9, 30),
       workOrderPrimary: "WT-2023",
       workOrderSecondary: "003",
+      approvedHours: 1200,
     },
   ],
   allocations: [
@@ -45,6 +48,10 @@ const initialState: AppState = {
   ],
   companyLogo: null,
   companyName: "החברה שלי",
+  workWeekSettings: {
+    workDays: [true, true, true, true, true, false, false], // Sunday to Thursday by default
+    hoursPerDay: 8.5,
+  },
 };
 
 interface AppContextType {
@@ -61,6 +68,8 @@ interface AppContextType {
   isAllocated: (employeeId: string, projectId: string) => boolean;
   updateCompanyLogo: (logoUrl: string) => void;
   updateCompanyName: (name: string) => void;
+  updateWorkWeekSettings: (settings: Partial<WorkWeekSettings>) => void;
+  calculateProjectWorkHours: (projectId: string) => number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -163,6 +172,57 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const updateWorkWeekSettings = (settings: Partial<WorkWeekSettings>) => {
+    setState((prev) => ({
+      ...prev,
+      workWeekSettings: {
+        ...prev.workWeekSettings,
+        ...settings,
+      },
+    }));
+  };
+
+  const calculateProjectWorkHours = (projectId: string) => {
+    const project = state.projects.find((p) => p.id === projectId);
+    if (!project) return 0;
+    
+    // Find all allocations for this project
+    const projectAllocations = state.allocations.filter(
+      (a) => a.projectId === projectId
+    );
+    
+    // Count the number of working days between start and end dates
+    const workingDays = calculateWorkingDays(
+      project.startDate,
+      project.endDate,
+      state.workWeekSettings.workDays
+    );
+    
+    // Calculate total work hours based on allocations, working days and hours per day
+    let totalWorkHours = 0;
+    projectAllocations.forEach((allocation) => {
+      totalWorkHours += (allocation.percentage / 100) * workingDays * state.workWeekSettings.hoursPerDay;
+    });
+    
+    return Math.round(totalWorkHours);
+  };
+
+  // Helper function to calculate working days between two dates
+  function calculateWorkingDays(startDate: Date, endDate: Date, workDays: boolean[]): number {
+    let count = 0;
+    const currentDate = new Date(startDate);
+    
+    while (currentDate <= endDate) {
+      const dayOfWeek = currentDate.getDay(); // 0 is Sunday, 6 is Saturday
+      if (workDays[dayOfWeek]) {
+        count++;
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return count;
+  }
+
   const value = {
     state,
     addEmployee,
@@ -177,6 +237,8 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     isAllocated,
     updateCompanyLogo,
     updateCompanyName,
+    updateWorkWeekSettings,
+    calculateProjectWorkHours,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -1,4 +1,3 @@
-
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { Upload } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import WorkWeekSettings from "@/components/WorkWeekSettings";
 
 export default function Settings() {
   const { state, addEmployee, updateEmployee, deleteEmployee, updateCompanyLogo, updateCompanyName } = useAppContext();
@@ -70,7 +70,6 @@ export default function Settings() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check if the file is an image
     if (!file.type.match('image.*')) {
       toast({
         title: "סוג קובץ לא נתמך",
@@ -108,9 +107,10 @@ export default function Settings() {
       </div>
       
       <Tabs defaultValue="employees" className="w-full">
-        <TabsList className="grid grid-cols-2 bg-gradient-to-r from-pm-blue-100 to-pm-blue-50">
+        <TabsList className="grid grid-cols-3 bg-gradient-to-r from-pm-blue-100 to-pm-blue-50">
           <TabsTrigger value="employees" className="data-[state=active]:bg-white">ניהול עובדים</TabsTrigger>
           <TabsTrigger value="system" className="data-[state=active]:bg-white">הגדרות מערכת</TabsTrigger>
+          <TabsTrigger value="workweek" className="data-[state=active]:bg-white">שבוע עבודה</TabsTrigger>
         </TabsList>
         
         <TabsContent value="employees" className="space-y-6 pt-4">
@@ -325,6 +325,10 @@ export default function Settings() {
               </Button>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="workweek" className="pt-4">
+          <WorkWeekSettings />
         </TabsContent>
       </Tabs>
     </div>

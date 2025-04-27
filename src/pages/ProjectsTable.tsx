@@ -8,10 +8,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 
 export default function ProjectsTable() {
-  const { state, addProject, updateProject, deleteProject } = useAppContext();
+  const { state, addProject, updateProject, deleteProject, calculateProjectWorkHours } = useAppContext();
   const { projects } = state;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -23,6 +24,7 @@ export default function ProjectsTable() {
     endDate: Date;
     workOrderPrimary: string;
     workOrderSecondary: string;
+    approvedHours?: number;
   }>({
     id: "",
     name: "",
@@ -30,6 +32,7 @@ export default function ProjectsTable() {
     endDate: new Date(),
     workOrderPrimary: "",
     workOrderSecondary: "",
+    approvedHours: 0,
   });
 
   useEffect(() => {
@@ -61,6 +64,7 @@ export default function ProjectsTable() {
       endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
       workOrderPrimary: "",
       workOrderSecondary: "",
+      approvedHours: 0,
     });
     setIsDialogOpen(true);
   };
@@ -92,6 +96,12 @@ export default function ProjectsTable() {
     return primary || secondary || "";
   };
 
+  const isOverloaded = (projectId: string, approvedHours: number | undefined) => {
+    if (!approvedHours) return false;
+    const calculatedHours = calculateProjectWorkHours(projectId);
+    return calculatedHours > approvedHours;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -106,37 +116,55 @@ export default function ProjectsTable() {
               <th className="min-w-[100px]">תאריך התחלה</th>
               <th className="min-w-[100px]">תאריך סיום</th>
               <th className="min-w-[120px]">הזמנת עבודה</th>
+              <th className="min-w-[100px]">שעות מאושרות</th>
+              <th className="min-w-[100px]">שעות מחושבות</th>
+              <th className="min-w-[80px]">חריגה</th>
               <th className="min-w-[90px]">פעולות</th>
             </tr>
           </thead>
           <tbody>
-            {projects.map((project) => (
-              <tr key={project.id}>
-                <td className="font-medium min-w-[120px]">{project.name}</td>
-                <td className="min-w-[100px]">{format(project.startDate, "dd/MM/yyyy", { locale: he })}</td>
-                <td className="min-w-[100px]">{format(project.endDate, "dd/MM/yyyy", { locale: he })}</td>
-                <td className="ltr min-w-[120px]">{renderWorkOrder(project.workOrderPrimary, project.workOrderSecondary)}</td>
-                <td className="min-w-[90px]">
-                  <div className="flex space-s-2 rtl:space-s-reverse">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditDialog(project)}
-                    >
-                      ערוך
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => handleDelete(project.id)}
-                    >
-                      מחק
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {projects.map((project) => {
+              const calculatedHours = calculateProjectWorkHours(project.id);
+              const overloaded = isOverloaded(project.id, project.approvedHours);
+              
+              return (
+                <tr key={project.id}>
+                  <td className="font-medium min-w-[120px]">{project.name}</td>
+                  <td className="min-w-[100px]">{format(project.startDate, "dd/MM/yyyy", { locale: he })}</td>
+                  <td className="min-w-[100px]">{format(project.endDate, "dd/MM/yyyy", { locale: he })}</td>
+                  <td className="ltr min-w-[120px]">{renderWorkOrder(project.workOrderPrimary, project.workOrderSecondary)}</td>
+                  <td className="min-w-[100px]">{project.approvedHours || 0}</td>
+                  <td className="min-w-[100px]">{calculatedHours}</td>
+                  <td className="min-w-[80px]">
+                    {overloaded && (
+                      <div className="flex items-center text-red-500">
+                        <AlertTriangle className="h-5 w-5 mr-1" />
+                        <span>חריגה</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="min-w-[90px]">
+                    <div className="flex space-s-2 rtl:space-s-reverse">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(project)}
+                      >
+                        ערוך
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDelete(project.id)}
+                      >
+                        מחק
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -231,6 +259,22 @@ export default function ProjectsTable() {
                   onChange={(e) => setCurrentProject({ ...currentProject, workOrderSecondary: e.target.value })}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="approved-hours" className="text-sm font-medium">
+                שעות מאושרות
+              </label>
+              <Input
+                id="approved-hours"
+                type="number"
+                min="0"
+                value={currentProject.approvedHours || ""}
+                onChange={(e) => setCurrentProject({ 
+                  ...currentProject, 
+                  approvedHours: e.target.value ? Number(e.target.value) : undefined 
+                })}
+                className="ltr"
+              />
             </div>
           </div>
           <DialogFooter>

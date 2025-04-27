@@ -13,6 +13,7 @@ export interface Project {
   endDate: Date;
   workOrderPrimary: string;
   workOrderSecondary: string;
+  approvedHours?: number;
 }
 
 export interface Allocation {
@@ -21,10 +22,16 @@ export interface Allocation {
   percentage: number;
 }
 
+export interface WorkWeekSettings {
+  workDays: boolean[];  // Array of 7 booleans representing days from Sunday to Saturday
+  hoursPerDay: number;
+}
+
 export interface AppState {
   employees: Employee[];
   projects: Project[];
   allocations: Allocation[];
   companyLogo: string | null;
   companyName: string;
+  workWeekSettings: WorkWeekSettings;
 }
