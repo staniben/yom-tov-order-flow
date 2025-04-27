@@ -195,30 +195,37 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     // If no allocations, return 0
     if (projectAllocations.length === 0) return 0;
     
-    // Count the number of working days between start and end dates
-    const workingDays = calculateWorkingDays(
-      project.startDate,
-      project.endDate,
-      state.workWeekSettings.workDays
-    );
-    
-    // Calculate total work hours based on allocations, working days and hours per day
-    let totalWorkHours = 0;
-    projectAllocations.forEach((allocation) => {
-      totalWorkHours += (allocation.percentage / 100) * workingDays * state.workWeekSettings.hoursPerDay;
-    });
-    
-    return Math.round(totalWorkHours);
+    try {
+      // Count the number of working days between start and end dates
+      const workingDays = calculateWorkingDays(
+        project.startDate,
+        project.endDate,
+        state.workWeekSettings.workDays
+      );
+      
+      // Calculate total work hours based on allocations, working days and hours per day
+      let totalWorkHours = 0;
+      projectAllocations.forEach((allocation) => {
+        totalWorkHours += (allocation.percentage / 100) * workingDays * state.workWeekSettings.hoursPerDay;
+      });
+      
+      return Math.round(totalWorkHours);
+    } catch (error) {
+      console.error("Error calculating project work hours:", error);
+      return 0;
+    }
   };
 
   // Helper function to calculate working days between two dates
   function calculateWorkingDays(startDate: Date, endDate: Date, workDays: boolean[]): number {
     let count = 0;
-    const currentDate = new Date(startDate);
     
-    // Ensure we're working with date objects
+    // Ensure we're working with actual Date objects (not just date strings)
     const start = new Date(startDate);
     const end = new Date(endDate);
+    
+    // Clone the start date to avoid modifying the original
+    const currentDate = new Date(start);
     
     while (currentDate <= end) {
       const dayOfWeek = currentDate.getDay(); // 0 is Sunday, 6 is Saturday

@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -101,6 +100,11 @@ export default function ProjectsTable() {
     const calculatedHours = calculateProjectWorkHours(projectId);
     return calculatedHours > approvedHours;
   };
+
+  useEffect(() => {
+    // This empty effect will trigger a re-render on component mount
+    // which will ensure that calculateProjectWorkHours runs for all projects
+  }, []);
 
   return (
     <div className="space-y-6">

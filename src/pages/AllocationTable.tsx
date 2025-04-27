@@ -1,4 +1,3 @@
-
 import { useAppContext } from "@/context/AppContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -35,15 +34,12 @@ export default function AllocationTable() {
 
   const handleCellClick = (employeeId: string, projectId: string) => {
     if (isAllocated(employeeId, projectId)) {
-      if (window.confirm("האם אתה בטוח שברצונך להסיר את השיבוץ?")) {
-        deleteAllocation(employeeId, projectId);
-        // Trigger a refresh
-        setRefreshTrigger(prev => prev + 1);
-        toast({
-          title: "השיבוץ הוסר",
-          description: "השיבוץ הוסר בהצלחה",
-        });
-      }
+      deleteAllocation(employeeId, projectId);
+      setRefreshTrigger(prev => prev + 1);
+      toast({
+        title: "השיבוץ הוסר",
+        description: "השיבוץ הוסר בהצלחה",
+      });
     } else {
       setSelectedEmployee(employeeId);
       setSelectedProject(projectId);
@@ -55,7 +51,6 @@ export default function AllocationTable() {
     if (selectedEmployee && selectedProject && percentage) {
       const parsedPercentage = parseInt(percentage, 10);
       
-      // Validate percentage range
       if (isNaN(parsedPercentage) || parsedPercentage <= 0 || parsedPercentage > 100) {
         toast({
           title: "שגיאה",
@@ -71,7 +66,6 @@ export default function AllocationTable() {
         percentage: parsedPercentage,
       });
       
-      // Force a refresh to update calculations
       setRefreshTrigger(prev => prev + 1);
       
       setIsDialogOpen(false);
@@ -86,7 +80,6 @@ export default function AllocationTable() {
     }
   };
 
-  // Calculate project hours when allocation changes or when triggered
   useEffect(() => {
     // This empty dependency will force a re-render when refreshTrigger changes
     // We're not actually doing anything in this effect other than triggering a re-render
