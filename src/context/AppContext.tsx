@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 import { AppState, Employee, Project, Allocation, WorkWeekSettings } from "@/types";
 
@@ -191,6 +192,9 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
       (a) => a.projectId === projectId
     );
     
+    // If no allocations, return 0
+    if (projectAllocations.length === 0) return 0;
+    
     // Count the number of working days between start and end dates
     const workingDays = calculateWorkingDays(
       project.startDate,
@@ -212,11 +216,16 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     let count = 0;
     const currentDate = new Date(startDate);
     
-    while (currentDate <= endDate) {
+    // Ensure we're working with date objects
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    while (currentDate <= end) {
       const dayOfWeek = currentDate.getDay(); // 0 is Sunday, 6 is Saturday
       if (workDays[dayOfWeek]) {
         count++;
       }
+      // Add one day
       currentDate.setDate(currentDate.getDate() + 1);
     }
     

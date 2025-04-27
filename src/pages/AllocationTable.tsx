@@ -1,17 +1,20 @@
+
 import { useAppContext } from "@/context/AppContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+import { toast } from "@/components/ui/use-toast";
 
 export default function AllocationTable() {
-  const { state, isAllocated, addAllocation, deleteAllocation } = useAppContext();
+  const { state, isAllocated, addAllocation, deleteAllocation, calculateProjectWorkHours } = useAppContext();
   const { employees, projects } = state;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [percentage, setPercentage] = useState("100");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (!isDialogOpen) return;
@@ -32,7 +35,15 @@ export default function AllocationTable() {
 
   const handleCellClick = (employeeId: string, projectId: string) => {
     if (isAllocated(employeeId, projectId)) {
-      deleteAllocation(employeeId, projectId);
+      if (window.confirm("האם אתה בטוח שברצונך להסיר את השיבוץ?")) {
+        deleteAllocation(employeeId, projectId);
+        // Trigger a refresh
+        setRefreshTrigger(prev => prev + 1);
+        toast({
+          title: "השיבוץ הוסר",
+          description: "השיבוץ הוסר בהצלחה",
+        });
+      }
     } else {
       setSelectedEmployee(employeeId);
       setSelectedProject(projectId);
@@ -42,17 +53,45 @@ export default function AllocationTable() {
 
   const handleAddAllocation = () => {
     if (selectedEmployee && selectedProject && percentage) {
+      const parsedPercentage = parseInt(percentage, 10);
+      
+      // Validate percentage range
+      if (isNaN(parsedPercentage) || parsedPercentage <= 0 || parsedPercentage > 100) {
+        toast({
+          title: "שגיאה",
+          description: "אחוז המשרה חייב להיות בין 1 ל-100",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       addAllocation({
         employeeId: selectedEmployee,
         projectId: selectedProject,
-        percentage: parseInt(percentage, 10),
+        percentage: parsedPercentage,
       });
+      
+      // Force a refresh to update calculations
+      setRefreshTrigger(prev => prev + 1);
+      
       setIsDialogOpen(false);
       setSelectedEmployee(null);
       setSelectedProject(null);
       setPercentage("100");
+      
+      toast({
+        title: "שיבוץ נוסף",
+        description: "עובד שובץ לפרויקט בהצלחה",
+      });
     }
   };
+
+  // Calculate project hours when allocation changes or when triggered
+  useEffect(() => {
+    // This empty dependency will force a re-render when refreshTrigger changes
+    // We're not actually doing anything in this effect other than triggering a re-render
+    // ProjectsTable will recalculate hours during its render
+  }, [refreshTrigger]);
 
   return (
     <div className="space-y-6">
