@@ -1,8 +1,9 @@
+
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import WorkWeekSettings from "@/components/WorkWeekSettings";
@@ -30,7 +31,7 @@ export default function Settings() {
   });
 
   // Update system settings when companyName changes from API
-  useState(() => {
+  useEffect(() => {
     setSystemSettings({ companyName: companyName || "" });
   }, [companyName]);
 
