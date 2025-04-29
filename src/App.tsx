@@ -12,6 +12,7 @@ import AllocationPercentage from "./pages/AllocationPercentage";
 import MonthlyOverview from "./pages/MonthlyOverview";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import DataMigrationModal from "./components/DataMigrationModal";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AppContextProvider>
+          <DataMigrationModal />
           <Layout>
             <Routes>
               <Route path="/" element={<AllocationTable />} />

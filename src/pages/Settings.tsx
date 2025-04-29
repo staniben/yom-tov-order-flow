@@ -6,9 +6,10 @@ import { useState } from "react";
 import { Upload } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import WorkWeekSettings from "@/components/WorkWeekSettings";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Settings() {
-  const { state, addEmployee, updateEmployee, deleteEmployee, updateCompanyLogo, updateCompanyName } = useAppContext();
+  const { state, isLoading, addEmployee, updateEmployee, deleteEmployee, updateCompanyLogo, updateCompanyName } = useAppContext();
   const { employees, companyLogo, companyName } = state;
 
   const [newEmployee, setNewEmployee] = useState({
@@ -28,41 +29,61 @@ export default function Settings() {
     companyName: companyName || "",
   });
 
-  const handleAddEmployee = () => {
+  // Update system settings when companyName changes from API
+  useState(() => {
+    setSystemSettings({ companyName: companyName || "" });
+  }, [companyName]);
+
+  const handleAddEmployee = async () => {
     if (newEmployee.name) {
-      addEmployee({
-        id: Date.now().toString(),
-        name: newEmployee.name,
-        position: newEmployee.position,
-        department: newEmployee.department,
-      });
-      setNewEmployee({ name: "", position: "", department: "" });
-      toast({
-        title: "עובד נוסף",
-        description: `${newEmployee.name} נוסף בהצלחה`,
-      });
+      try {
+        await addEmployee({
+          name: newEmployee.name,
+          position: newEmployee.position,
+          department: newEmployee.department,
+        });
+        
+        setNewEmployee({ name: "", position: "", department: "" });
+        
+        toast({
+          title: "עובד נוסף",
+          description: `${newEmployee.name} נוסף בהצלחה`,
+        });
+      } catch (error) {
+        console.error("Error adding employee:", error);
+      }
     }
   };
 
-  const handleEditEmployee = () => {
+  const handleEditEmployee = async () => {
     if (editingEmployee) {
-      updateEmployee(editingEmployee.id, editingEmployee);
-      setEditingEmployee(null);
-      toast({
-        title: "עובד עודכן",
-        description: "פרטי העובד עודכנו בהצלחה",
-      });
+      try {
+        await updateEmployee(editingEmployee.id, editingEmployee);
+        setEditingEmployee(null);
+        
+        toast({
+          title: "עובד עודכן",
+          description: "פרטי העובד עודכנו בהצלחה",
+        });
+      } catch (error) {
+        console.error("Error updating employee:", error);
+      }
     }
   };
 
-  const handleDeleteEmployee = (id: string) => {
+  const handleDeleteEmployee = async (id: string) => {
     if (window.confirm("האם אתה בטוח שברצונך למחוק עובד זה?")) {
-      deleteEmployee(id);
-      toast({
-        title: "עובד נמחק",
-        description: "העובד הוסר מהמערכת בהצלחה",
-        variant: "destructive",
-      });
+      try {
+        await deleteEmployee(id);
+        
+        toast({
+          title: "עובד נמחק",
+          description: "העובד הוסר מהמערכת בהצלחה",
+          variant: "destructive",
+        });
+      } catch (error) {
+        console.error("Error deleting employee:", error);
+      }
     }
   };
 
@@ -80,25 +101,73 @@ export default function Settings() {
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       if (event.target?.result) {
-        updateCompanyLogo(event.target.result as string);
-        toast({
-          title: "לוגו הועלה",
-          description: "הלוגו נשמר בהצלחה",
-        });
+        try {
+          await updateCompanyLogo(event.target.result as string);
+          
+          toast({
+            title: "לוגו הועלה",
+            description: "הלוגו נשמר בהצלחה",
+          });
+        } catch (error) {
+          console.error("Error updating logo:", error);
+        }
       }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSaveSettings = () => {
-    updateCompanyName(systemSettings.companyName);
-    toast({
-      title: "הגדרות נשמרו",
-      description: "הגדרות המערכת עודכנו בהצלחה",
-    });
+  const handleSaveSettings = async () => {
+    try {
+      await updateCompanyName(systemSettings.companyName);
+      
+      toast({
+        title: "הגדרות נשמרו",
+        description: "הגדרות המערכת עודכנו בהצלחה",
+      });
+    } catch (error) {
+      console.error("Error updating settings:", error);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-48" />
+        </div>
+        
+        <Tabs defaultValue="employees" className="w-full">
+          <TabsList className="grid grid-cols-3 bg-gradient-to-r from-pm-blue-100 to-pm-blue-50">
+            <TabsTrigger value="employees" className="data-[state=active]:bg-white">ניהול עובדים</TabsTrigger>
+            <TabsTrigger value="system" className="data-[state=active]:bg-white">הגדרות מערכת</TabsTrigger>
+            <TabsTrigger value="workweek" className="data-[state=active]:bg-white">שבוע עבודה</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="employees" className="space-y-6 pt-4">
+            <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-200">
+              <Skeleton className="h-6 w-48 mb-4" />
+              <div className="space-y-4">
+                {Array(3).fill(0).map((_, idx) => (
+                  <Skeleton key={idx} className="h-10 w-full" />
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-200">
+              <Skeleton className="h-6 w-48 mb-4" />
+              <div className="space-y-4">
+                {Array(5).fill(0).map((_, idx) => (
+                  <Skeleton key={idx} className="h-14 w-full" />
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

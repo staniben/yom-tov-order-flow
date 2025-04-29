@@ -9,7 +9,126 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      allocations: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          percentage: number
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          percentage: number
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          percentage?: number
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allocations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "allocations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          created_at: string
+          department: string | null
+          id: string
+          name: string
+          position: string | null
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          id?: string
+          name: string
+          position?: string | null
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          id?: string
+          name?: string
+          position?: string | null
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          approved_hours: number | null
+          created_at: string
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          work_order_primary: string
+          work_order_secondary: string
+        }
+        Insert: {
+          approved_hours?: number | null
+          created_at?: string
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          work_order_primary: string
+          work_order_secondary: string
+        }
+        Update: {
+          approved_hours?: number | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          work_order_primary?: string
+          work_order_secondary?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          company_logo: string | null
+          company_name: string
+          hours_per_day: number
+          id: string
+          work_days: boolean[]
+        }
+        Insert: {
+          company_logo?: string | null
+          company_name: string
+          hours_per_day?: number
+          id?: string
+          work_days?: boolean[]
+        }
+        Update: {
+          company_logo?: string | null
+          company_name?: string
+          hours_per_day?: number
+          id?: string
+          work_days?: boolean[]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

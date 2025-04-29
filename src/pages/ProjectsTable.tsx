@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -8,14 +9,24 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { useState, useEffect } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProjectsTable() {
-  const { state, addProject, updateProject, deleteProject, calculateProjectWorkHours } = useAppContext();
+  const { 
+    state, 
+    isLoading, 
+    addProject, 
+    updateProject, 
+    deleteProject, 
+    calculateProjectWorkHours 
+  } = useAppContext();
+  
   const { projects } = state;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentProject, setCurrentProject] = useState<{
     id: string;
     name: string;
@@ -74,18 +85,31 @@ export default function ProjectsTable() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
-    if (isEditMode) {
-      updateProject(currentProject.id, currentProject);
-    } else {
-      addProject(currentProject);
+  const handleSave = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      if (isEditMode) {
+        await updateProject(currentProject.id, currentProject);
+      } else {
+        await addProject(currentProject);
+      }
+      
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving project:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("האם אתה בטוח שברצונך למחוק פרויקט זה?")) {
-      deleteProject(id);
+      try {
+        await deleteProject(id);
+      } catch (error) {
+        console.error("Error deleting project:", error);
+      }
     }
   };
 
@@ -101,10 +125,47 @@ export default function ProjectsTable() {
     return calculatedHours > approvedHours;
   };
 
-  useEffect(() => {
-    // This empty effect will trigger a re-render on component mount
-    // which will ensure that calculateProjectWorkHours runs for all projects
-  }, []);
+  // Render loading skeleton
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm overflow-x-auto">
+          <table className="pm-table min-w-full table-auto rtl text-right">
+            <thead>
+              <tr>
+                <th className="min-w-[120px]">שם הפרויקט</th>
+                <th className="min-w-[100px]">תאריך התחלה</th>
+                <th className="min-w-[100px]">תאריך סיום</th>
+                <th className="min-w-[120px]">הזמנת עבודה</th>
+                <th className="min-w-[100px]">שעות מאושרות</th>
+                <th className="min-w-[100px]">שעות מחושבות</th>
+                <th className="min-w-[80px]">חריגה</th>
+                <th className="min-w-[90px]">פעולות</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array(5).fill(0).map((_, idx) => (
+                <tr key={idx}>
+                  <td><Skeleton className="h-6 w-28" /></td>
+                  <td><Skeleton className="h-6 w-20" /></td>
+                  <td><Skeleton className="h-6 w-20" /></td>
+                  <td><Skeleton className="h-6 w-24" /></td>
+                  <td><Skeleton className="h-6 w-16" /></td>
+                  <td><Skeleton className="h-6 w-16" /></td>
+                  <td><Skeleton className="h-6 w-14" /></td>
+                  <td><Skeleton className="h-6 w-20" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -127,48 +188,56 @@ export default function ProjectsTable() {
             </tr>
           </thead>
           <tbody>
-            {projects.map((project) => {
-              const calculatedHours = calculateProjectWorkHours(project.id);
-              const overloaded = isOverloaded(project.id, project.approvedHours);
-              
-              return (
-                <tr key={project.id}>
-                  <td className="font-medium min-w-[120px]">{project.name}</td>
-                  <td className="min-w-[100px]">{format(project.startDate, "dd/MM/yyyy", { locale: he })}</td>
-                  <td className="min-w-[100px]">{format(project.endDate, "dd/MM/yyyy", { locale: he })}</td>
-                  <td className="ltr min-w-[120px]">{renderWorkOrder(project.workOrderPrimary, project.workOrderSecondary)}</td>
-                  <td className="min-w-[100px]">{project.approvedHours || 0}</td>
-                  <td className="min-w-[100px]">{calculatedHours}</td>
-                  <td className="min-w-[80px]">
-                    {overloaded && (
-                      <div className="flex items-center text-red-500">
-                        <AlertTriangle className="h-5 w-5 mr-1" />
-                        <span>חריגה</span>
+            {projects.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="text-center py-4 text-gray-500">
+                  לא נמצאו פרויקטים
+                </td>
+              </tr>
+            ) : (
+              projects.map((project) => {
+                const calculatedHours = calculateProjectWorkHours(project.id);
+                const overloaded = isOverloaded(project.id, project.approvedHours);
+                
+                return (
+                  <tr key={project.id}>
+                    <td className="font-medium min-w-[120px]">{project.name}</td>
+                    <td className="min-w-[100px]">{format(project.startDate, "dd/MM/yyyy", { locale: he })}</td>
+                    <td className="min-w-[100px]">{format(project.endDate, "dd/MM/yyyy", { locale: he })}</td>
+                    <td className="ltr min-w-[120px]">{renderWorkOrder(project.workOrderPrimary, project.workOrderSecondary)}</td>
+                    <td className="min-w-[100px]">{project.approvedHours || 0}</td>
+                    <td className="min-w-[100px]">{calculatedHours}</td>
+                    <td className="min-w-[80px]">
+                      {overloaded && (
+                        <div className="flex items-center text-red-500">
+                          <AlertTriangle className="h-5 w-5 mr-1" />
+                          <span>חריגה</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="min-w-[90px]">
+                      <div className="flex space-s-2 rtl:space-s-reverse">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(project)}
+                        >
+                          ערוך
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDelete(project.id)}
+                        >
+                          מחק
+                        </Button>
                       </div>
-                    )}
-                  </td>
-                  <td className="min-w-[90px]">
-                    <div className="flex space-s-2 rtl:space-s-reverse">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditDialog(project)}
-                      >
-                        ערוך
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDelete(project.id)}
-                      >
-                        מחק
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
@@ -282,11 +351,16 @@ export default function ProjectsTable() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
               ביטול
             </Button>
-            <Button type="button" onClick={handleSave}>
-              {isEditMode ? "עדכן" : "הוסף"}
+            <Button type="button" onClick={handleSave} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  טוען...
+                </>
+              ) : isEditMode ? "עדכן" : "הוסף"}
             </Button>
           </DialogFooter>
         </DialogContent>
