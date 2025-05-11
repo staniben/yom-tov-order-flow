@@ -1,12 +1,12 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { useAppContext } from "@/context/AppContext";
+import { useOfflineAppContext } from "@/context/OfflineAppContext";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { state } = useAppContext();
+  const { state } = useOfflineAppContext();
 
   const navItems = [
     { path: "/", label: "טבלת שיבוץ" },

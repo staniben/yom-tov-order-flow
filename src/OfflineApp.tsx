@@ -12,6 +12,7 @@ import AllocationPercentage from "./pages/AllocationPercentage";
 import MonthlyOverview from "./pages/MonthlyOverview";
 import OfflineSettings from "./pages/OfflineSettings";
 import NotFound from "./pages/NotFound";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +25,8 @@ const OfflineApp = () => (
         <OfflineAppContextProvider>
           <Layout>
             <Routes>
-              <Route path="/" element={<AllocationTable />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/allocation-table" element={<AllocationTable />} />
               <Route path="/projects" element={<OfflineProjectsTable />} />
               <Route path="/allocation" element={<AllocationPercentage />} />
               <Route path="/monthly" element={<MonthlyOverview />} />
