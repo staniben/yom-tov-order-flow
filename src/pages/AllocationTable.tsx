@@ -1,5 +1,5 @@
 
-import { useAppContext } from "@/context/AppContext";
+import { useOfflineAppContext } from "@/context/OfflineAppContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 
 export default function AllocationTable() {
-  const { state, isLoading, isAllocated, addAllocation, deleteAllocation } = useAppContext();
+  const { state, isLoading, isAllocated, addAllocation, deleteAllocation } = useOfflineAppContext();
   const { employees, projects } = state;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);

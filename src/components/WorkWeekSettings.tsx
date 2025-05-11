@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useAppContext } from "@/context/AppContext";
+import { useOfflineAppContext } from "@/context/OfflineAppContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { toast } from "@/components/ui/use-toast";
 const daysOfWeek = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 
 export default function WorkWeekSettings() {
-  const { state, updateWorkWeekSettings } = useAppContext();
+  const { state, updateWorkWeekSettings } = useOfflineAppContext();
   const { workWeekSettings } = state;
   
   const [localSettings, setLocalSettings] = useState({

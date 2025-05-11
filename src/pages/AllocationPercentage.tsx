@@ -1,11 +1,11 @@
 
-import { useAppContext } from "@/context/AppContext";
+import { useOfflineAppContext } from "@/context/OfflineAppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
 export default function AllocationPercentage() {
-  const { state, updateAllocation } = useAppContext();
+  const { state, updateAllocation } = useOfflineAppContext();
   const { employees, projects, allocations } = state;
 
   const [editingAllocation, setEditingAllocation] = useState<{

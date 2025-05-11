@@ -1,12 +1,12 @@
 
-import { useAppContext } from "@/context/AppContext";
+import { useOfflineAppContext } from "@/context/OfflineAppContext";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { he } from "date-fns/locale";
 
 export default function MonthlyOverview() {
-  const { state } = useAppContext();
+  const { state } = useOfflineAppContext();
   const { employees, projects, allocations } = state;
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
