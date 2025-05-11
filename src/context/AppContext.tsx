@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { AppState, Employee, Project, Allocation, WorkWeekSettings, StorageSettings } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -266,7 +265,8 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      const newProject = mapDatabaseProjectToProject(data);
+      // Add type assertion to fix type mismatch
+      const newProject = mapDatabaseProjectToProject(data as DatabaseProject);
       
       setState((prev) => ({
         ...prev,
