@@ -14,6 +14,7 @@ export interface Project {
   workOrderPrimary: string;
   workOrderSecondary: string;
   approvedHours?: number;
+  budgetCode?: string; // Added budget code field ("סת"ב")
 }
 
 export interface Allocation {
@@ -27,6 +28,11 @@ export interface WorkWeekSettings {
   hoursPerDay: number;
 }
 
+export interface StorageSettings {
+  type: 'browser' | 'network';
+  networkPath?: string;
+}
+
 export interface AppState {
   employees: Employee[];
   projects: Project[];
@@ -34,4 +40,5 @@ export interface AppState {
   companyLogo: string | null;
   companyName: string;
   workWeekSettings: WorkWeekSettings;
+  storageSettings: StorageSettings;
 }

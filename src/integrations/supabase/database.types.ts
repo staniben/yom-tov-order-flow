@@ -15,6 +15,7 @@ export type DatabaseProject = {
   work_order_primary: string;
   work_order_secondary: string;
   approved_hours: number | null;
+  budget_code: string | null; // Added budget code field ("סת"ב")
   created_at: string;
 };
 
@@ -32,4 +33,6 @@ export type DatabaseSettings = {
   company_logo: string | null;
   work_days: boolean[];
   hours_per_day: number;
+  storage_type: 'browser' | 'network'; // Added storage type configuration
+  network_path: string | null; // Added network path configuration
 };
