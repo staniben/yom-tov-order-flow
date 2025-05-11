@@ -1,6 +1,5 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { AppState, Employee, Project, Allocation, WorkWeekSettings } from "@/types";
+import { AppState, Employee, Project, Allocation, WorkWeekSettings, StorageSettings } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { DatabaseEmployee, DatabaseProject, DatabaseAllocation, DatabaseSettings } from "@/integrations/supabase/database.types";
 import { toast } from "@/components/ui/use-toast";
@@ -16,6 +15,9 @@ const initialState: AppState = {
     workDays: [true, true, true, true, true, false, false], // Sunday to Thursday by default
     hoursPerDay: 8.5,
   },
+  storageSettings: {
+    type: 'browser'
+  }
 };
 
 interface AppContextType {
@@ -60,6 +62,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     workOrderPrimary: dbProject.work_order_primary,
     workOrderSecondary: dbProject.work_order_secondary,
     approvedHours: dbProject.approved_hours || undefined,
+    budgetCode: dbProject.budget_code || undefined,
   });
 
   const mapDatabaseAllocationToAllocation = (dbAllocation: DatabaseAllocation): Allocation => ({
@@ -121,6 +124,10 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
         workWeekSettings: {
           workDays: settingsData?.work_days || [true, true, true, true, true, false, false],
           hoursPerDay: settingsData?.hours_per_day || 8.5,
+        },
+        storageSettings: {
+          type: settingsData?.storage_type || 'browser',
+          networkPath: settingsData?.network_path || undefined
         }
       });
     } catch (error) {
@@ -248,6 +255,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           work_order_primary: project.workOrderPrimary,
           work_order_secondary: project.workOrderSecondary,
           approved_hours: project.approvedHours || null,
+          budget_code: project.budgetCode || null,
         })
         .select()
         .single();
@@ -283,6 +291,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
       if (project.workOrderPrimary !== undefined) updateData.work_order_primary = project.workOrderPrimary;
       if (project.workOrderSecondary !== undefined) updateData.work_order_secondary = project.workOrderSecondary;
       if (project.approvedHours !== undefined) updateData.approved_hours = project.approvedHours;
+      if (project.budgetCode !== undefined) updateData.budget_code = project.budgetCode;
       
       const { error } = await supabase
         .from('projects')
@@ -453,7 +462,11 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           .from('settings')
           .insert({
             ...settings,
-            company_name: settings.company_name || 'החברה שלי'
+            company_name: settings.company_name || 'החברה שלי',
+            storage_type: settings.storage_type || 'browser',
+            network_path: settings.network_path || null,
+            work_days: settings.work_days || [true, true, true, true, true, false, false],
+            hours_per_day: settings.hours_per_day || 8.5
           });
           
         if (insertError) throw insertError;

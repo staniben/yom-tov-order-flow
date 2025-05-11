@@ -1,4 +1,3 @@
-
 import { DatabaseEmployee, DatabaseProject, DatabaseAllocation, DatabaseSettings } from "@/integrations/supabase/database.types";
 
 type LocalStorageOptions = {
@@ -144,6 +143,7 @@ export class LocalStorageAdapter {
         work_order_primary: project.work_order_primary,
         work_order_secondary: project.work_order_secondary,
         approved_hours: project.approved_hours,
+        budget_code: project.budget_code,
         created_at: new Date().toISOString(),
       };
 
@@ -279,6 +279,8 @@ export class LocalStorageAdapter {
           company_logo: updates.company_logo || null,
           work_days: updates.work_days || [true, true, true, true, true, false, false],
           hours_per_day: updates.hours_per_day || 8.5,
+          storage_type: updates.storage_type || 'browser',
+          network_path: updates.network_path || null
         });
       }
       
