@@ -126,7 +126,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           hoursPerDay: settingsData?.hours_per_day || 8.5,
         },
         storageSettings: {
-          type: settingsData?.storage_type || 'browser',
+          type: settingsData?.storage_type as 'browser' | 'network' || 'browser',
           networkPath: settingsData?.network_path || undefined
         }
       });
