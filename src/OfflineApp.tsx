@@ -25,8 +25,8 @@ const OfflineApp = () => (
         <OfflineAppContextProvider>
           <Layout>
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/allocation-table" element={<AllocationTable />} />
+              <Route path="/" element={<AllocationTable />} />
+              <Route path="/dashboard" element={<Index />} />
               <Route path="/projects" element={<OfflineProjectsTable />} />
               <Route path="/allocation" element={<AllocationPercentage />} />
               <Route path="/monthly" element={<MonthlyOverview />} />

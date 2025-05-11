@@ -10,6 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { path: "/", label: "טבלת שיבוץ" },
+    { path: "/dashboard", label: "לוח מחוונים" },
     { path: "/projects", label: "פרויקטים" },
     { path: "/allocation", label: "אחוזי השקעה" },
     { path: "/monthly", label: "סקירה חודשית" },
