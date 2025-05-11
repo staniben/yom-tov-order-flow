@@ -126,8 +126,11 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           hoursPerDay: settingsData?.hours_per_day || 8.5,
         },
         storageSettings: {
-          type: settingsData?.storage_type as 'browser' | 'network' || 'browser',
-          networkPath: settingsData?.network_path || undefined
+          // Use proper type checking with defaults
+          type: (settingsData && 'storage_type' in settingsData) ? 
+                (settingsData.storage_type as 'browser' | 'network') : 'browser',
+          networkPath: (settingsData && 'network_path' in settingsData) ? 
+                      settingsData.network_path || undefined : undefined
         }
       });
     } catch (error) {
@@ -339,7 +342,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error deleting project:', error);
       toast({
-        title: "שגיאה במחיקת פרויקט",
+        title: "��גיאה במחיקת פרויקט",
         description: "אירעה שגיאה במחיקת הפרויקט",
         variant: "destructive",
       });
