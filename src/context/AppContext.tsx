@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { AppState, Employee, Project, Allocation, WorkWeekSettings, StorageSettings } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,7 +131,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           type: (settingsData && 'storage_type' in settingsData) ? 
                 (settingsData.storage_type as 'browser' | 'network') : 'browser',
           networkPath: (settingsData && 'network_path' in settingsData) ? 
-                      settingsData.network_path || undefined : undefined
+                      (settingsData.network_path as string | null) ?? undefined : undefined
         }
       });
     } catch (error) {
