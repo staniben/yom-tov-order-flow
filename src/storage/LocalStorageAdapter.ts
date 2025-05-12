@@ -1,6 +1,4 @@
-
 import { DatabaseEmployee, DatabaseProject, DatabaseAllocation, DatabaseSettings } from "@/integrations/supabase/database.types";
-import path from 'path';
 
 type LocalStorageOptions = {
   storageType: 'browser' | 'network';
@@ -10,11 +8,6 @@ type LocalStorageOptions = {
 export type QueryResponse<T> = {
   data: T | null;
   error: Error | null;
-};
-
-// Check if we're running in Electron
-const isElectron = () => {
-  return window && window.electronAPI !== undefined;
 };
 
 export class LocalStorageAdapter {
@@ -43,91 +36,27 @@ export class LocalStorageAdapter {
       : { storageType: 'browser' };
   }
 
-  // Build a file path for storage files
-  private getFilePath(key: string): string {
-    if (!this.options.networkPath) return '';
-    return path.join(this.options.networkPath, `${key}.json`);
-  }
-
   // Generic methods for data access
   private async getData<T>(key: string): Promise<T[]> {
-    // If we're in Electron and using network storage
-    if (isElectron() && this.options.storageType === 'network' && this.options.networkPath) {
-      try {
-        console.log(`Fetching data from network path: ${this.options.networkPath} for key: ${key}`);
-        const filePath = this.getFilePath(key);
-        
-        // Check if path exists
-        const pathCheck = await window.electronAPI.checkPathExists(this.options.networkPath);
-        if (!pathCheck.exists) {
-          console.error(`Network path does not exist or is not accessible: ${this.options.networkPath}`);
-          console.log('Falling back to browser localStorage');
-          return this.getBrowserData<T>(key);
-        }
-        
-        // Try to read the file
-        const result = await window.electronAPI.readFile(filePath);
-        if (result.error) {
-          console.error(`Error reading file ${filePath}:`, result.error);
-          return this.getBrowserData<T>(key);
-        }
-        
-        // Parse the data
-        return result.data ? JSON.parse(result.data) : [];
-      } catch (error) {
-        console.error(`Error accessing network storage for ${key}:`, error);
-        console.log('Falling back to browser localStorage');
-        return this.getBrowserData<T>(key);
-      }
-    } else {
-      // Fallback to browser storage if not in Electron or not using network storage
-      return this.getBrowserData<T>(key);
+    if (this.options.storageType === 'network' && this.options.networkPath) {
+      // In a real implementation, this would access the network path
+      // Since we can't directly access network paths from browser JavaScript,
+      // this would require additional backend support or Electron integration
+      console.log(`Network storage requested for ${key} at ${this.options.networkPath}`);
+      // For now, fall back to browser storage
     }
-  }
-
-  private async setData<T>(key: string, data: T[]): Promise<void> {
-    // If we're in Electron and using network storage
-    if (isElectron() && this.options.storageType === 'network' && this.options.networkPath) {
-      try {
-        console.log(`Saving data to network path: ${this.options.networkPath} for key: ${key}`);
-        const filePath = this.getFilePath(key);
-        
-        // Check if path exists
-        const pathCheck = await window.electronAPI.checkPathExists(this.options.networkPath);
-        if (!pathCheck.exists) {
-          console.error(`Network path does not exist or is not accessible: ${this.options.networkPath}`);
-          console.log('Falling back to browser localStorage');
-          this.setBrowserData(key, data);
-          return;
-        }
-        
-        // Try to write the file
-        const jsonData = JSON.stringify(data, null, 2);
-        const result = await window.electronAPI.writeFile(filePath, jsonData);
-        
-        if (result.error) {
-          console.error(`Error writing file ${filePath}:`, result.error);
-          this.setBrowserData(key, data);
-          return;
-        }
-      } catch (error) {
-        console.error(`Error accessing network storage for ${key}:`, error);
-        console.log('Falling back to browser localStorage');
-        this.setBrowserData(key, data);
-      }
-    } else {
-      // Fallback to browser storage if not in Electron or not using network storage
-      this.setBrowserData(key, data);
-    }
-  }
-
-  // Browser storage methods used for fallback
-  private getBrowserData<T>(key: string): T[] {
+    
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : [];
   }
 
-  private setBrowserData<T>(key: string, data: T[]): void {
+  private async setData<T>(key: string, data: T[]): Promise<void> {
+    if (this.options.storageType === 'network' && this.options.networkPath) {
+      // In a real implementation, this would save to the network path
+      console.log(`Network storage requested for ${key} at ${this.options.networkPath}`);
+      // For now, fall back to browser storage
+    }
+
     localStorage.setItem(key, JSON.stringify(data));
   }
 
@@ -403,18 +332,6 @@ export class LocalStorageAdapter {
     } catch (error) {
       console.error('Error importing data:', error);
       return false;
-    }
-  }
-}
-
-// Add TypeScript interface for the Electron API
-declare global {
-  interface Window {
-    electronAPI?: {
-      checkPathExists: (path: string) => Promise<{exists: boolean, error: string | null}>;
-      readFile: (path: string) => Promise<{data: string | null, error: string | null}>;
-      writeFile: (path: string, data: string) => Promise<{success: boolean, error: string | null}>;
-      selectFolder: () => Promise<{path: string | null}>;
     }
   }
 }
