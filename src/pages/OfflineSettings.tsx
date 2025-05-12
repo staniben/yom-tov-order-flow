@@ -1,16 +1,21 @@
-
 import { useOfflineAppContext } from "@/context/OfflineAppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Folder } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import WorkWeekSettings from "@/components/WorkWeekSettings";
 import { Skeleton } from "@/components/ui/skeleton";
 import DataBackupModal from "@/components/DataBackupModal";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Check if we're running in Electron
+const isElectron = () => {
+  return window && window.electronAPI !== undefined;
+};
 
 export default function OfflineSettings() {
   const { state, isLoading, addEmployee, updateEmployee, deleteEmployee, updateCompanyLogo, updateCompanyName, updateStorageSettings } = useOfflineAppContext();
@@ -143,6 +148,39 @@ export default function OfflineSettings() {
       });
     } catch (error) {
       console.error("Error updating settings:", error);
+    }
+  };
+
+  const handleFolderSelect = async () => {
+    if (!window.electronAPI) {
+      toast({
+        title: "שגיאה",
+        description: "בחירת תיקייה זמינה רק בגרסת שולחן העבודה של האפליקציה.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await window.electronAPI.selectFolder();
+      if (result.path) {
+        setSystemSettings({
+          ...systemSettings,
+          networkPath: result.path
+        });
+        
+        toast({
+          title: "תיקייה נבחרה",
+          description: `נבחרה התיקייה: ${result.path}`,
+        });
+      }
+    } catch (error) {
+      console.error("Error selecting folder:", error);
+      toast({
+        title: "שגיאה בבחירת תיקייה",
+        description: "אירעה שגיאה בעת בחירת התיקייה",
+        variant: "destructive",
+      });
     }
   };
 
@@ -429,6 +467,15 @@ export default function OfflineSettings() {
           <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-200">
             <h2 className="text-lg font-medium mb-4 text-pm-blue-700">הגדרות אחסון</h2>
             
+            {!isElectron() && (
+              <Alert className="mb-4 bg-amber-50 border-amber-200">
+                <AlertDescription className="text-amber-800">
+                  שים לב: גישה לתיקיות מקומיות או תיקיות רשת אפשרית רק בגרסת שולחן העבודה של האפליקציה (Electron).
+                  הגרסה הנוכחית פועלת בסביבת דפדפן שבה הנתונים נשמרו מקומית בדפדפן בלבד.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="space-y-6">
               <div className="space-y-3">
                 <h3 className="text-md font-medium">סוג אחסון</h3>
@@ -459,9 +506,9 @@ export default function OfflineSettings() {
                   <div className="flex items-start space-x-4 rtl:space-x-reverse mt-3">
                     <RadioGroupItem value="network" id="storage-network" />
                     <div className="grid gap-1">
-                      <Label htmlFor="storage-network" className="font-medium">תיקיית רשת</Label>
+                      <Label htmlFor="storage-network" className="font-medium">תיקיית רשת או תיקייה מקומית</Label>
                       <p className="text-sm text-muted-foreground">
-                        אחסון הנתונים בתיקיית רשת משותפת. מתאים לעבודה ממספר מחשבים במקביל.
+                        אחסון הנתונים בתיקיית רשת משותפת או בתיקייה מקומית. מתאים לעבודה ממספר מחשבים במקביל.
                       </p>
                     </div>
                   </div>
@@ -470,20 +517,36 @@ export default function OfflineSettings() {
               
               {systemSettings.storageType === 'network' && (
                 <div className="space-y-2 pt-2">
-                  <label className="text-sm font-medium">נתיב תיקיית רשת</label>
-                  <Input 
-                    placeholder="\\server\shared\data" 
-                    value={systemSettings.networkPath}
-                    onChange={(e) => setSystemSettings({ ...systemSettings, networkPath: e.target.value })}
-                    className="border-gray-300 focus:border-pm-blue-500"
-                  />
+                  <label className="text-sm font-medium">נתיב תיקייה</label>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder={isElectron() ? "C:\\Data\\WorkOrders או \\\\server\\shared\\data" : "\\\\server\\shared\\data"} 
+                      value={systemSettings.networkPath}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, networkPath: e.target.value })}
+                      className="border-gray-300 focus:border-pm-blue-500"
+                    />
+                    
+                    {isElectron() && (
+                      <Button 
+                        variant="outline"
+                        onClick={handleFolderSelect}
+                        className="flex gap-1 items-center"
+                      >
+                        <Folder className="h-4 w-4" />
+                        בחר תיקייה
+                      </Button>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    הזן את הנתיב המלא לתיקיית הרשת. למשל: \\server\shared\data
+                    הזן את הנתיב המלא לתיקייה. למשל: C:\Data\WorkOrders או \\server\shared\data
                   </p>
-                  <p className="text-xs text-amber-600 mt-2">
-                    הערה: בגרסה זו של המערכת, אפשרות אחסון ברשת היא לצורך הדגמה בלבד.
-                    <br />במסגרת הרשאות הדפדפן, הנתונים עדיין יישמרו מקומית בדפדפן.
-                  </p>
+                  
+                  {!isElectron() && (
+                    <p className="text-xs text-amber-600 mt-2">
+                      הערה: בגרסת דפדפן, אפשרות אחסון בתיקייה היא לצורך הדגמה בלבד.
+                      <br />במסגרת הרשאות הדפדפן, הנתונים עדיין יישמרו מקומית בדפדפן.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
