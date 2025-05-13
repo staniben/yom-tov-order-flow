@@ -1,4 +1,7 @@
+
 import { DatabaseEmployee, DatabaseProject, DatabaseAllocation, DatabaseSettings } from "@/integrations/supabase/database.types";
+import { isElectron, electronAPI } from "@/utils/electron";
+import { toast } from "@/components/ui/use-toast";
 
 type LocalStorageOptions = {
   storageType: 'browser' | 'network';
@@ -38,25 +41,82 @@ export class LocalStorageAdapter {
 
   // Generic methods for data access
   private async getData<T>(key: string): Promise<T[]> {
+    // If network storage is selected and we have a path
     if (this.options.storageType === 'network' && this.options.networkPath) {
-      // In a real implementation, this would access the network path
-      // Since we can't directly access network paths from browser JavaScript,
-      // this would require additional backend support or Electron integration
-      console.log(`Network storage requested for ${key} at ${this.options.networkPath}`);
-      // For now, fall back to browser storage
+      try {
+        // Check if we're running in Electron
+        if (isElectron()) {
+          // Use Electron's IPC to read from file system
+          const filePath = `${this.options.networkPath}/${key}.json`;
+          const result = await electronAPI.readFile(filePath);
+          
+          if (result.success && result.data) {
+            return JSON.parse(result.data);
+          } else {
+            // If file doesn't exist yet, return empty array
+            if (result.error?.includes('ENOENT')) {
+              return [];
+            }
+            
+            // Log the error
+            console.error(`Error reading from network storage: ${result.error}`);
+            
+            // Fall back to browser storage on error
+            console.warn('Falling back to browser storage due to network storage error');
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : [];
+          }
+        } else {
+          // Running in browser but network storage selected
+          console.warn('Network storage selected but running in browser. Falling back to browser storage.');
+          const data = localStorage.getItem(key);
+          return data ? JSON.parse(data) : [];
+        }
+      } catch (error) {
+        console.error('Error with network storage operations:', error);
+        // Fall back to browser storage on error
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : [];
+      }
     }
     
+    // Default to browser storage
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : [];
   }
 
   private async setData<T>(key: string, data: T[]): Promise<void> {
+    // If network storage is selected and we have a path
     if (this.options.storageType === 'network' && this.options.networkPath) {
-      // In a real implementation, this would save to the network path
-      console.log(`Network storage requested for ${key} at ${this.options.networkPath}`);
-      // For now, fall back to browser storage
+      try {
+        // Check if we're running in Electron
+        if (isElectron()) {
+          // Use Electron's IPC to write to file system
+          const filePath = `${this.options.networkPath}/${key}.json`;
+          const jsonData = JSON.stringify(data, null, 2);
+          const result = await electronAPI.writeFile(filePath, jsonData);
+          
+          if (!result.success) {
+            console.error(`Error writing to network storage: ${result.error}`);
+            // Fall back to browser storage on error
+            console.warn('Falling back to browser storage due to network storage error');
+            localStorage.setItem(key, JSON.stringify(data));
+          }
+          return;
+        } else {
+          // Running in browser but network storage selected
+          console.warn('Network storage selected but running in browser. Falling back to browser storage.');
+          localStorage.setItem(key, JSON.stringify(data));
+          return;
+        }
+      } catch (error) {
+        console.error('Error with network storage operations:', error);
+        // Fall back to browser storage on error
+        localStorage.setItem(key, JSON.stringify(data));
+      }
     }
 
+    // Default to browser storage
     localStorage.setItem(key, JSON.stringify(data));
   }
 

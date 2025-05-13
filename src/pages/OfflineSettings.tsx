@@ -1,16 +1,16 @@
-
 import { useOfflineAppContext } from "@/context/OfflineAppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
-import { Upload } from "lucide-react";
+import { Upload, FolderOpen } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import WorkWeekSettings from "@/components/WorkWeekSettings";
 import { Skeleton } from "@/components/ui/skeleton";
 import DataBackupModal from "@/components/DataBackupModal";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { isElectron, electronAPI } from "@/utils/electron";
 
 export default function OfflineSettings() {
   const { state, isLoading, addEmployee, updateEmployee, deleteEmployee, updateCompanyLogo, updateCompanyName, updateStorageSettings } = useOfflineAppContext();
@@ -35,6 +35,9 @@ export default function OfflineSettings() {
     networkPath: storageSettings.networkPath || "",
   });
 
+  // Flag to check if app is running in Electron
+  const [isElectronEnv, setIsElectronEnv] = useState(false);
+  
   // Update system settings when companyName or storageSettings change from state
   useEffect(() => {
     setSystemSettings({ 
@@ -42,6 +45,9 @@ export default function OfflineSettings() {
       storageType: storageSettings.type || "browser",
       networkPath: storageSettings.networkPath || "",
     });
+    
+    // Check if app is running in Electron
+    setIsElectronEnv(isElectron());
   }, [companyName, storageSettings]);
 
   const handleAddEmployee = async () => {
@@ -94,6 +100,53 @@ export default function OfflineSettings() {
       } catch (error) {
         console.error("Error deleting employee:", error);
       }
+    }
+  };
+
+  // Folder selection dialog handler
+  const handleSelectFolder = async () => {
+    try {
+      if (!isElectronEnv) {
+        toast({
+          title: "אפשרות לא זמינה",
+          description: "בחירת תיקייה זמינה רק בגרסת שולחן העבודה של האפליקציה",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const result = await electronAPI.selectFolder();
+      
+      if (result.success && result.folderPath) {
+        // Update the form state
+        setSystemSettings({
+          ...systemSettings,
+          networkPath: result.folderPath,
+          storageType: 'network'
+        });
+        
+        toast({
+          title: "תיקייה נבחרה",
+          description: `התיקייה ${result.folderPath} נבחרה בהצלחה`,
+        });
+      } else if (result.canceled) {
+        // User canceled folder selection
+        console.log('Folder selection canceled');
+      } else if (result.error) {
+        toast({
+          title: "שגיאה בבחירת תיקייה",
+          description: `אירעה שגיאה: ${result.error}`,
+          variant: "destructive",
+        });
+        console.error('Folder selection error:', result.error, result.details);
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה לא צפויה",
+        variant: "destructive",
+      });
+      console.error('Unexpected folder selection error:', error);
     }
   };
 
@@ -345,7 +398,7 @@ export default function OfflineSettings() {
               </div>
               
               <div className="space-y-4">
-                <label className="text-sm font-medium">לוגו החברה</label>
+                <label className="text-sm font-medium">לוגו החבר��</label>
                 
                 {companyLogo ? (
                   <div className="flex flex-col items-center gap-4 p-4 border border-dashed border-gray-300 rounded-lg">
@@ -457,11 +510,13 @@ export default function OfflineSettings() {
                   </div>
                   
                   <div className="flex items-start space-x-4 rtl:space-x-reverse mt-3">
-                    <RadioGroupItem value="network" id="storage-network" />
+                    <RadioGroupItem value="network" id="storage-network" disabled={!isElectronEnv} />
                     <div className="grid gap-1">
-                      <Label htmlFor="storage-network" className="font-medium">תיקיית רשת</Label>
+                      <Label htmlFor="storage-network" className="font-medium">תיקיית אחסון</Label>
                       <p className="text-sm text-muted-foreground">
-                        אחסון הנתונים בתיקיית רשת משותפת. מתאים לעבודה ממספר מחשבים במקביל.
+                        {isElectronEnv 
+                          ? "אחסון הנתונים בתיקייה נבחרת במחשב או ברשת. מתאים לגיבוי מקומי או שיתוף נתונים."
+                          : "אפשרות זו זמינה רק בגרסת שולחן העבודה של האפליקציה."}
                       </p>
                     </div>
                   </div>
@@ -470,20 +525,35 @@ export default function OfflineSettings() {
               
               {systemSettings.storageType === 'network' && (
                 <div className="space-y-2 pt-2">
-                  <label className="text-sm font-medium">נתיב תיקיית רשת</label>
-                  <Input 
-                    placeholder="\\server\shared\data" 
-                    value={systemSettings.networkPath}
-                    onChange={(e) => setSystemSettings({ ...systemSettings, networkPath: e.target.value })}
-                    className="border-gray-300 focus:border-pm-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    הזן את הנתיב המלא לתיקיית הרשת. למשל: \\server\shared\data
-                  </p>
-                  <p className="text-xs text-amber-600 mt-2">
-                    הערה: בגרסה זו של המערכת, אפשרות אחסון ברשת היא לצורך הדגמה בלבד.
-                    <br />במסגרת הרשאות הדפדפן, הנתונים עדיין יישמרו מקומית בדפדפן.
-                  </p>
+                  <label className="text-sm font-medium">נתיב תיקיית אחסון</label>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="בחר תיקייה..." 
+                      value={systemSettings.networkPath}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, networkPath: e.target.value })}
+                      className="border-gray-300 focus:border-pm-blue-500 flex-1"
+                      readOnly={!isElectronEnv}
+                    />
+                    <Button 
+                      onClick={handleSelectFolder}
+                      disabled={!isElectronEnv}
+                      className="flex items-center gap-1"
+                    >
+                      <FolderOpen className="h-4 w-4" />
+                      בחר תיקייה
+                    </Button>
+                  </div>
+                  
+                  {isElectronEnv ? (
+                    <p className="text-xs text-gray-500 mt-1">
+                      בחר את התיקייה בה יישמרו נתוני המערכת.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-amber-600 mt-2">
+                      אחסון בתיקייה זמין רק בגרסת שולחן העבודה של האפליקציה.
+                      <br />כדי להשתמש באפשרות זו, הורד והתקן את גרסת שולחן העבודה.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
